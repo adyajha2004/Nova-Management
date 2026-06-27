@@ -1,0 +1,36 @@
+services:
+  # 1. Flask Backend REST API
+  - type: web
+    name: nova-mrp-backend
+    env: python
+    buildCommand: pip install -r backend/requirements.txt
+    startCommand: gunicorn --chdir backend "app:create_app()"
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.0
+      - key: DATABASE_URL
+        value: postgresql://nova_mrp_db_user:password@hostname/nova_mrp_db  # Production PostgreSQL URI
+      - key: SECRET_KEY
+        value: production-secret-key-change-me-in-dashboard
+      - key: FLASK_ENV
+        value: production
+
+  # 2. Decoupled React Frontend
+  - type: web
+    name: nova-mrp-frontend
+    env: static
+    buildCommand: cd frontend && npm install && npm run build
+    publishPath: frontend/dist
+    headers:
+      - path: /*
+        name: Cache-Control
+        value: public, max-age=0, must-revalidate
+    routes:
+      # Redirect API requests directly to the backend
+      - type: rewrite
+        source: /api/*
+        destination: https://nova-mrp-backend.onrender.com/api/*
+      # Support client-side routing by redirecting all other requests to index.html
+      - type: rewrite
+        source: /*
+        destination: /index.html
