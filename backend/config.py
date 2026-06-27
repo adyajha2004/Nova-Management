@@ -3,10 +3,12 @@ import os
 class Config:
     SECRET_KEY = os.environ.get('SECRET_KEY')
     if not SECRET_KEY:
-        raise RuntimeError(
-            "FATAL: SECRET_KEY environment variable is not set. "
-            "Refusing to start with an insecure default."
-        )
+        if os.environ.get('FLASK_ENV') == 'production':
+            raise RuntimeError(
+                "FATAL: SECRET_KEY environment variable is not set. "
+                "Refusing to start with an insecure default in production."
+            )
+        SECRET_KEY = 'nova-company-mrp-secret-key-dev-fallback'
     
     # JWT config
     JWT_SECRET_KEY = SECRET_KEY

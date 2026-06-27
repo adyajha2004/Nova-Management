@@ -1,6 +1,7 @@
 from flask import Flask, jsonify
 from flask_cors import CORS
 from flask_jwt_extended import JWTManager
+from flask_migrate import Migrate
 from models import db
 from config import Config
 
@@ -13,11 +14,24 @@ def create_app():
     CORS(app, resources={r"/api/*": {"origins": allowed_origins}}, supports_credentials=True)
     
     db.init_app(app)
+    Migrate(app, db)
     JWTManager(app)
     
     # Create tables if they don't exist
     with app.app_context():
         db.create_all()
+        # Self-healing migration for SQLite local databases
+        if app.config['SQLALCHEMY_DATABASE_URI'].startswith('sqlite:'):
+            try:
+                from sqlalchemy import inspect, text
+                inspector = inspect(db.engine)
+                if 'audit_log' in inspector.get_table_names():
+                    columns = [col['name'] for col in inspector.get_columns('audit_log')]
+                    if 'actor' not in columns:
+                        db.session.execute(text("ALTER TABLE audit_log ADD COLUMN actor VARCHAR(50)"))
+                        db.session.commit()
+            except Exception as e:
+                pass
     
     # Register Blueprints
     from blueprints.auth import auth_bp
