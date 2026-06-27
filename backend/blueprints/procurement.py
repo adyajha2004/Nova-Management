@@ -1,4 +1,5 @@
 from flask import Blueprint, jsonify, request, abort
+from flask_jwt_extended import jwt_required
 from models import db, MPRMAIN, MPRTRAN, Party_Master, POMAIN, POTRAN, Item_Master, Party_Item
 from blueprints.auth import check_admin
 from blueprints.audit import log_change
@@ -25,6 +26,7 @@ def get_mprs():
     return jsonify(result)
 
 @procurement_bp.route('/api/procurement/rfp/dispatch', methods=['POST'])
+@jwt_required()
 def dispatch_rfp():
     check_admin()
     data = request.json or {}
@@ -67,6 +69,7 @@ def dispatch_rfp():
     })
 
 @procurement_bp.route('/api/procurement/po/generate', methods=['POST'])
+@jwt_required()
 def generate_pos():
     check_admin()
     data = request.json or {}
@@ -156,6 +159,7 @@ def get_pos():
     return jsonify(result)
 
 @procurement_bp.route('/api/procurement/pos/<po_no>/receive', methods=['PUT'])
+@jwt_required()
 def receive_po(po_no):
     check_admin()
     
@@ -190,6 +194,7 @@ def receive_po(po_no):
     return jsonify(po.serialize())
 
 @procurement_bp.route('/api/procurement/pos/<po_no>/payment', methods=['PUT'])
+@jwt_required()
 def update_payment_status(po_no):
     check_admin()
     
@@ -212,6 +217,7 @@ def update_payment_status(po_no):
     return jsonify(po.serialize())
     
 @procurement_bp.route('/api/procurement/vendors', methods=['POST'])
+@jwt_required()
 def create_vendor():
     check_admin()
     data = request.json or {}
@@ -268,6 +274,7 @@ def create_vendor():
     return jsonify(vendor.serialize()), 201
 
 @procurement_bp.route('/api/procurement/vendors/<party_code>', methods=['PUT'])
+@jwt_required()
 def update_vendor(party_code):
     check_admin()
     vendor = Party_Master.query.filter_by(party_code=party_code).first()
@@ -305,6 +312,7 @@ def update_vendor(party_code):
     return jsonify(vendor.serialize())
 
 @procurement_bp.route('/api/procurement/vendors/<party_code>', methods=['DELETE'])
+@jwt_required()
 def delete_vendor(party_code):
     check_admin()
     vendor = Party_Master.query.filter_by(party_code=party_code).first()
@@ -330,6 +338,7 @@ def get_vendor_items(party_code):
     return jsonify([o.serialize() for o in offerings])
 
 @procurement_bp.route('/api/procurement/vendors/<party_code>/items', methods=['POST'])
+@jwt_required()
 def add_vendor_item(party_code):
     check_admin()
     vendor = Party_Master.query.filter_by(party_code=party_code).first()
@@ -372,6 +381,7 @@ def add_vendor_item(party_code):
     return jsonify(offering.serialize()), 201
 
 @procurement_bp.route('/api/procurement/vendors/<party_code>/items/<item_code>', methods=['PUT'])
+@jwt_required()
 def update_vendor_item_rate(party_code, item_code):
     check_admin()
     offering = Party_Item.query.filter_by(party_code=party_code, item_code=item_code).first()
@@ -398,6 +408,7 @@ def update_vendor_item_rate(party_code, item_code):
     return jsonify(offering.serialize())
 
 @procurement_bp.route('/api/procurement/vendors/<party_code>/items/<item_code>', methods=['DELETE'])
+@jwt_required()
 def delete_vendor_item(party_code, item_code):
     check_admin()
     offering = Party_Item.query.filter_by(party_code=party_code, item_code=item_code).first()
@@ -410,6 +421,7 @@ def delete_vendor_item(party_code, item_code):
     return jsonify({'success': True})
 
 @procurement_bp.route('/api/procurement/vendors/bulk', methods=['POST'])
+@jwt_required()
 def bulk_update_vendors():
     check_admin()
     data = request.json or {}

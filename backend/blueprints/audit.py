@@ -5,10 +5,17 @@ from datetime import datetime
 audit_bp = Blueprint('audit', __name__)
 
 # Helper function to create audit log records
-def log_change(target_table, modified_field, old_val, new_val):
+def log_change(target_table, modified_field, old_val, new_val, actor=None):
+    if actor is None:
+        try:
+            from flask_jwt_extended import get_jwt_identity
+            actor = get_jwt_identity()
+        except Exception:
+            actor = 'system'
     try:
         log = Audit_Log(
             timestamp=datetime.utcnow(),
+            actor=actor,
             target_table=target_table,
             modified_field=modified_field,
             old_value_snapshot=str(old_val) if old_val is not None else None,

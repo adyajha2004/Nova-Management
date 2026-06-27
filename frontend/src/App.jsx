@@ -139,7 +139,7 @@ export default function App() {
       setIsAuthenticated(true);
       
       // Configure Axios global headers
-      axios.defaults.headers.common['X-User-Role'] = savedRole;
+      axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
     }
   }, []);
 
@@ -173,7 +173,7 @@ export default function App() {
       localStorage.setItem('userName', username);
       localStorage.setItem('token', token);
       
-      axios.defaults.headers.common['X-User-Role'] = role;
+      axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
       
       setUserRole(role);
       setUserName(username);
@@ -192,7 +192,7 @@ export default function App() {
     localStorage.removeItem('userName');
     localStorage.removeItem('token');
     
-    delete axios.defaults.headers.common['X-User-Role'];
+    delete axios.defaults.headers.common['Authorization'];
     
     setIsAuthenticated(false);
     setUserRole('Viewer');

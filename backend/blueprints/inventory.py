@@ -1,4 +1,5 @@
 from flask import Blueprint, jsonify, request, abort
+from flask_jwt_extended import jwt_required
 from models import db, Item_Master, Item_Group, Party_Item, Party_Master
 from blueprints.auth import check_admin
 from blueprints.audit import log_change
@@ -11,6 +12,7 @@ def get_groups():
     return jsonify([g.serialize() for g in groups])
 
 @inventory_bp.route('/api/inventory/groups', methods=['POST'])
+@jwt_required()
 def create_group():
     check_admin()
     data = request.json or {}
@@ -56,6 +58,7 @@ def create_group():
     return jsonify(group.serialize()), 201
 
 @inventory_bp.route('/api/inventory/groups/<itg_code>', methods=['PUT'])
+@jwt_required()
 def update_group(itg_code):
     check_admin()
     group = Item_Group.query.filter_by(itg_code=itg_code).first()
@@ -77,6 +80,7 @@ def update_group(itg_code):
     return jsonify(group.serialize())
 
 @inventory_bp.route('/api/inventory/groups/<itg_code>', methods=['DELETE'])
+@jwt_required()
 def delete_group(itg_code):
     check_admin()
     group = Item_Group.query.filter_by(itg_code=itg_code).first()
@@ -106,6 +110,7 @@ def get_item(item_code):
     return jsonify(itm.serialize())
 
 @inventory_bp.route('/api/inventory/items', methods=['POST'])
+@jwt_required()
 def create_item():
     check_admin()
     data = request.json or {}
@@ -204,6 +209,7 @@ def create_item():
         return jsonify({'error': f'Failed to generate item code under transaction lock: {str(e)}'}), 500
 
 @inventory_bp.route('/api/inventory/items/<item_code>', methods=['PUT'])
+@jwt_required()
 def update_item(item_code):
     check_admin()
     itm = Item_Master.query.filter_by(item_code=item_code).first()
@@ -248,6 +254,7 @@ def update_item(item_code):
     return jsonify(itm.serialize())
 
 @inventory_bp.route('/api/inventory/items/<item_code>', methods=['DELETE'])
+@jwt_required()
 def delete_item(item_code):
     check_admin()
     itm = Item_Master.query.filter_by(item_code=item_code).first()
@@ -280,6 +287,7 @@ def get_item_vendors(item_code):
     return jsonify(result)
 
 @inventory_bp.route('/api/inventory/items/<item_code>/vendors', methods=['POST'])
+@jwt_required()
 def add_item_vendor(item_code):
     check_admin()
     itm = Item_Master.query.filter_by(item_code=item_code).first()
@@ -327,6 +335,7 @@ def add_item_vendor(item_code):
     }), 201
 
 @inventory_bp.route('/api/inventory/items/<item_code>/vendors/<party_code>', methods=['PUT'])
+@jwt_required()
 def update_item_vendor_rate(item_code, party_code):
     check_admin()
     offering = Party_Item.query.filter_by(party_code=party_code, item_code=item_code).first()
@@ -356,6 +365,7 @@ def update_item_vendor_rate(item_code, party_code):
     })
 
 @inventory_bp.route('/api/inventory/items/<item_code>/vendors/<party_code>', methods=['DELETE'])
+@jwt_required()
 def delete_item_vendor(item_code, party_code):
     check_admin()
     offering = Party_Item.query.filter_by(party_code=party_code, item_code=item_code).first()
@@ -368,6 +378,7 @@ def delete_item_vendor(item_code, party_code):
     return jsonify({'success': True})
 
 @inventory_bp.route('/api/inventory/items/bulk', methods=['POST'])
+@jwt_required()
 def bulk_update_items():
     check_admin()
     data = request.json or {}
@@ -475,6 +486,7 @@ def bulk_update_items():
     return jsonify({'success': True, 'message': 'Bulk changes saved successfully.'})
 
 @inventory_bp.route('/api/inventory/groups/bulk', methods=['POST'])
+@jwt_required()
 def bulk_update_groups():
     check_admin()
     data = request.json or {}

@@ -1,7 +1,16 @@
 import os
 
 class Config:
-    SECRET_KEY = os.environ.get('SECRET_KEY', 'nova-company-mrp-secret-key-12345')
+    SECRET_KEY = os.environ.get('SECRET_KEY')
+    if not SECRET_KEY:
+        raise RuntimeError(
+            "FATAL: SECRET_KEY environment variable is not set. "
+            "Refusing to start with an insecure default."
+        )
+    
+    # JWT config
+    JWT_SECRET_KEY = SECRET_KEY
+    JWT_ACCESS_TOKEN_EXPIRES = 86400  # 24 hours, in seconds
     
     # Database config
     BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -13,4 +22,5 @@ class Config:
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     
     # CORS
+    CORS_ORIGINS = os.environ.get('CORS_ORIGINS', '*')
     CORS_HEADERS = 'Content-Type'

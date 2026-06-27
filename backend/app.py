@@ -1,5 +1,6 @@
 from flask import Flask, jsonify
 from flask_cors import CORS
+from flask_jwt_extended import JWTManager
 from models import db
 from config import Config
 
@@ -8,10 +9,15 @@ def create_app():
     app.config.from_object(Config)
     
     # Enable CORS for decoupled React application
-    # Exposing headers allows client-side code to read multi-tenant metadata if needed
-    CORS(app, resources={r"/api/*": {"origins": "*"}}, supports_credentials=True)
+    allowed_origins = app.config.get('CORS_ORIGINS', '*')
+    CORS(app, resources={r"/api/*": {"origins": allowed_origins}}, supports_credentials=True)
     
     db.init_app(app)
+    JWTManager(app)
+    
+    # Create tables if they don't exist
+    with app.app_context():
+        db.create_all()
     
     # Register Blueprints
     from blueprints.auth import auth_bp
@@ -51,13 +57,40 @@ def create_app():
             ]
         })
         
+    # Global error handlers
+    @app.errorhandler(400)
+    def bad_request(e):
+        return jsonify({'error': str(e.description)}), 400
+
+    @app.errorhandler(403)
+    def forbidden(e):
+        return jsonify({'error': str(e.description)}), 403
+
+    @app.errorhandler(404)
+    def not_found(e):
+        return jsonify({'error': 'Resource not found.'}), 404
+
+    @app.errorhandler(422)
+    def unprocessable(e):
+        return jsonify({'error': str(e.description)}), 422
+
+    @app.errorhandler(Exception)
+    def handle_exception(e):
+        db.session.rollback()
+        app.logger.exception('Unhandled exception')
+        return jsonify({'error': 'Internal server error.'}), 500
+
+    @app.teardown_appcontext
+    def shutdown_session(exception=None):
+        if exception:
+            db.session.rollback()
+        db.session.remove()
+        
     return app
 
 if __name__ == '__main__':
     app = create_app()
-    with app.app_context():
-        db.create_all()
-        
+    
     # Prevent automatic reloader loops by defaulting debug to False
     # and reading from FLASK_DEBUG env var if needed.
     import os

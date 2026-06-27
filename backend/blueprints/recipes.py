@@ -1,4 +1,5 @@
 from flask import Blueprint, jsonify, request
+from flask_jwt_extended import jwt_required
 from models import db, Recipe_Master, Recipe_Tran, Item_Master, MPRMAIN, MPRTRAN
 from blueprints.auth import check_admin
 from blueprints.audit import log_change
@@ -23,6 +24,7 @@ def get_recipe(rcp_code):
     return jsonify(result)
 
 @recipes_bp.route('/api/recipes/scale', methods=['POST'])
+@jwt_required()
 def scale_recipe():
     check_admin()
     data = request.json or {}
@@ -119,6 +121,7 @@ def scale_recipe():
     })
 
 @recipes_bp.route('/api/recipes', methods=['POST'])
+@jwt_required()
 def create_recipe():
     check_admin()
     data = request.json or {}
@@ -185,6 +188,7 @@ def create_recipe():
     return jsonify(result), 201
 
 @recipes_bp.route('/api/recipes/<rcp_code>', methods=['PUT'])
+@jwt_required()
 def update_recipe(rcp_code):
     check_admin()
     recipe = Recipe_Master.query.filter_by(rcp_code=rcp_code).first()
@@ -230,6 +234,7 @@ def update_recipe(rcp_code):
     return jsonify(result)
 
 @recipes_bp.route('/api/recipes/<rcp_code>', methods=['DELETE'])
+@jwt_required()
 def delete_recipe(rcp_code):
     check_admin()
     recipe = Recipe_Master.query.filter_by(rcp_code=rcp_code).first()

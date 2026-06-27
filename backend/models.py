@@ -272,6 +272,7 @@ class Audit_Log(db.Model):
     __tablename__ = 'audit_log'
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     timestamp = db.Column(db.DateTime, default=datetime.utcnow)
+    actor = db.Column(db.String(50), nullable=True)
     target_table = db.Column(db.String(50), nullable=False)
     modified_field = db.Column(db.String(50), nullable=False)
     old_value_snapshot = db.Column(db.Text)
@@ -281,6 +282,7 @@ class Audit_Log(db.Model):
         return {
             'id': self.id,
             'timestamp': self.timestamp.isoformat() if self.timestamp else None,
+            'actor': self.actor,
             'target_table': self.target_table,
             'modified_field': self.modified_field,
             'old_value_snapshot': self.old_value_snapshot,

@@ -1,4 +1,5 @@
 import os
+os.environ['SECRET_KEY'] = 'test-secret-key-12345'
 import sys
 import unittest
 from datetime import datetime
@@ -20,6 +21,15 @@ class MRPSystemTestCase(unittest.TestCase):
             db.create_all()
             from seed import seed_database
             seed_database()
+
+        # Fetch JWT tokens for authenticated tests
+        res_admin = self.client.post('/api/auth/login', json={'username': 'admin', 'password': 'admin123'})
+        self.admin_token = res_admin.get_json()['token']
+        res_viewer = self.client.post('/api/auth/login', json={'username': 'viewer', 'password': 'viewer123'})
+        self.viewer_token = res_viewer.get_json()['token']
+        
+        self.headers_admin = {'Authorization': f'Bearer {self.admin_token}'}
+        self.headers_viewer = {'Authorization': f'Bearer {self.viewer_token}'}
 
     def tearDown(self):
         with self.app.app_context():
@@ -84,7 +94,7 @@ class MRPSystemTestCase(unittest.TestCase):
         print("\n[VERIFICATION 3] Verifying auto-generation sequence locking on insert...")
         
         headers_admin = {
-            'X-User-Role': 'Admin'
+            'Authorization': f'Bearer {self.admin_token}'
         }
         
         # We POST to create a RAW item without supplying item_code
@@ -115,7 +125,7 @@ class MRPSystemTestCase(unittest.TestCase):
         print("\n[VERIFICATION 4] Simulating full recipe scaling & PO receipt on unified system...")
         
         headers_admin = {
-            'X-User-Role': 'Admin'
+            'Authorization': f'Bearer {self.admin_token}'
         }
         
         # Scale Recipe RD0001 (Blue Indigo Dye - owned by ND) with target yield 1000.0
@@ -165,56 +175,26 @@ class MRPSystemTestCase(unittest.TestCase):
         print("-> SUCCESS: Security audit logs recorded snapshots.")
 
     def test_5_db_administration_endpoints(self):
-        print("\n[VERIFICATION 5] Verifying database reset & clear administration endpoints...")
+        print("\n[VERIFICATION 5] Verifying database reset & clear administration endpoints are disabled...")
         
         headers_admin = {
-            'X-User-Role': 'Admin'
-        }
-        headers_viewer = {
-            'X-User-Role': 'Viewer'
+            'Authorization': f'Bearer {self.admin_token}'
         }
         
-        # 1. Non-admin should be rejected
-        res_seed_nonadmin = self.client.post('/api/admin/db/seed', headers=headers_viewer)
-        self.assertEqual(res_seed_nonadmin.status_code, 403)
-        
-        # 2. Clear Database to Clean Slate (Admin)
-        res_clear = self.client.post('/api/admin/db/clear', headers=headers_admin)
-        self.assertEqual(res_clear.status_code, 200)
-        clear_data = res_clear.get_json()
-        self.assertTrue(clear_data['success'])
-        self.assertIn('clean slate', clear_data['message'])
-        
-        # Verify database is empty of items
-        res_items = self.client.get('/api/inventory/items')
-        self.assertEqual(res_items.status_code, 200)
-        self.assertEqual(len(res_items.get_json()), 0)
-        
-        # Verify groups are still there but sequence is 0
-        with self.app.app_context():
-            from models import Item_Group
-            group = Item_Group.query.filter_by(itg_code='R00001').first()
-            self.assertEqual(group.last_sequence, 0)
-            
-        # 3. Seed Database back to Demo (Admin)
+        # Verify seed/clear routes are completely removed and return 404
         res_seed = self.client.post('/api/admin/db/seed', headers=headers_admin)
-        self.assertEqual(res_seed.status_code, 200)
-        seed_data = res_seed.get_json()
-        self.assertTrue(seed_data['success'])
-        self.assertIn('re-seeded', seed_data['message'])
+        self.assertEqual(res_seed.status_code, 404)
         
-        # Verify items are back
-        res_items_after = self.client.get('/api/inventory/items')
-        self.assertEqual(res_items_after.status_code, 200)
-        self.assertEqual(len(res_items_after.get_json()), 73)
+        res_clear = self.client.post('/api/admin/db/clear', headers=headers_admin)
+        self.assertEqual(res_clear.status_code, 404)
         
-        print("-> SUCCESS: Checked admin controls, clean resets, and re-seeding behaviors.")
+        print("-> SUCCESS: Checked that dangerous admin reset and clear endpoints are disabled.")
 
     def test_6_party_master_crud_and_orders(self):
         print("\n[VERIFICATION 6] Verifying Party Master CRUD operations & orders history safety...")
         
         headers_admin = {
-            'X-User-Role': 'Admin'
+            'Authorization': f'Bearer {self.admin_token}'
         }
         
         # 1. Create new vendor P1005
@@ -261,10 +241,10 @@ class MRPSystemTestCase(unittest.TestCase):
         print("\n[VERIFICATION 7] Verifying Supplier Item Offerings CRUD API...")
         
         headers_admin = {
-            'X-User-Role': 'Admin'
+            'Authorization': f'Bearer {self.admin_token}'
         }
         headers_viewer = {
-            'X-User-Role': 'Viewer'
+            'Authorization': f'Bearer {self.viewer_token}'
         }
         
         # 1. Fetch current offerings for P1004 (should have RM004 and RM008 seeded)
@@ -346,10 +326,10 @@ class MRPSystemTestCase(unittest.TestCase):
         print("\n[VERIFICATION 8] Verifying Item Master Vendor Offerings API & Staged Creation...")
         
         headers_admin = {
-            'X-User-Role': 'Admin'
+            'Authorization': f'Bearer {self.admin_token}'
         }
         headers_viewer = {
-            'X-User-Role': 'Viewer'
+            'Authorization': f'Bearer {self.viewer_token}'
         }
         
         # 1. Fetch current vendors offering RM004 (should have P1001 and P1004 seeded)
@@ -429,7 +409,7 @@ class MRPSystemTestCase(unittest.TestCase):
         print("\n[VERIFICATION 9] Verifying Recipe Details Retrieval & MPR/PO Descending Sorting...")
         
         headers_admin = {
-            'X-User-Role': 'Admin'
+            'Authorization': f'Bearer {self.admin_token}'
         }
         
         # 1. Verify Recipe Details Retrieval
@@ -493,7 +473,7 @@ class MRPSystemTestCase(unittest.TestCase):
         print("\n[VERIFICATION 10] Verifying Bulk Item Master Updates (Excel Spreadsheet Mode)...")
         
         headers_admin = {
-            'X-User-Role': 'Admin'
+            'Authorization': f'Bearer {self.admin_token}'
         }
         
         # We will attempt to perform creations, updates, and deletes in a single bulk request:
@@ -564,7 +544,7 @@ class MRPSystemTestCase(unittest.TestCase):
     def test_11_bulk_groups_excel_mode(self):
         print("\n[VERIFICATION 11] Verifying Bulk Item Group Updates (Group Excel Spreadsheet)...")
         headers_admin = {
-            'X-User-Role': 'Admin'
+            'Authorization': f'Bearer {self.admin_token}'
         }
         
         # Test creation of a new group, updating packaging/names of existing group P00001 (from seed), and deleting group CAT (seeded but empty)
@@ -619,201 +599,7 @@ class MRPSystemTestCase(unittest.TestCase):
     def test_12_bulk_vendors_excel_mode(self):
         print("\n[VERIFICATION 12] Verifying Bulk Vendor/Party Updates (Party Excel Spreadsheet)...")
         headers_admin = {
-            'X-User-Role': 'Admin'
-        }
-        
-        # Let's seed an empty vendor that we can delete
-        res_create_del = self.client.post('/api/procurement/vendors', json={
-            'party_code': 'TMPVD',
-            'party_name': 'Temp Delete Vendor'
-        }, headers=headers_admin)
-        self.assertEqual(res_create_del.status_code, 201)
-        
-        # Test bulk creates, updates, and deletes
-        res_bulk = self.client.post('/api/procurement/vendors/bulk', json={
-            'creates': [
-                {
-                    'party_code': 'NEWVD',
-                    'party_name': 'New Bulk Vendor',
-                    'email': 'newbulk@example.com',
-                    'phone_no': '9876543210'
-                }
-            ],
-            'updates': [
-                {
-                    'party_code': 'P1002',
-                    'party_name': 'Updated Solvents Supplier',
-                    'email': 'updated@example.com',
-                    'payment_terms': 'Net 60'
-                }
-            ],
-            'deletes': ['TMPVD']
-        }, headers=headers_admin)
-        
-        self.assertEqual(res_bulk.status_code, 200)
-        data = res_bulk.get_json()
-        self.assertTrue(data['success'])
-        
-        # Verify created vendor
-        res_vends = self.client.get('/api/procurement/vendors')
-        vendors = res_vends.get_json()
-        
-        newv = next(v for v in vendors if v['party_code'] == 'NEWVD')
-        self.assertEqual(newv['party_name'], 'New Bulk Vendor')
-        self.assertEqual(newv['email'], 'newbulk@example.com')
-        
-        # Verify updated vendor
-        updv = next(v for v in vendors if v['party_code'] == 'P1002')
-        self.assertEqual(updv['party_name'], 'Updated Solvents Supplier')
-        self.assertEqual(updv['payment_terms'], 'Net 60')
-        
-        # Verify deleted vendor is gone
-        self.assertFalse(any(v['party_code'] == 'TMPVD' for v in vendors))
-        
-        # Verify that attempting to delete vendor P1001 (referenced in seeded purchase orders) fails and rolls back
-        res_fail = self.client.post('/api/procurement/vendors/bulk', json={
-            'deletes': ['P1001']
-        # 3. Verify sorting of POs (descending by po_no)
-        # Fetch POs and assert descending sorting
-        res_pos = self.client.get('/api/procurement/pos', headers=headers_admin)
-        self.assertEqual(res_pos.status_code, 200)
-        pos_list = res_pos.get_json()
-        po_nos = [p['po_no'] for p in pos_list]
-        
-        self.assertEqual(po_nos, sorted(po_nos, reverse=True))
-        print("-> SUCCESS: PO list sorted descending correctly.")
-
-    def test_10_bulk_items_excel_mode(self):
-        print("\n[VERIFICATION 10] Verifying Bulk Item Master Updates (Excel Spreadsheet Mode)...")
-        
-        headers_admin = {
-            'X-User-Role': 'Admin'
-        }
-        
-        # We will attempt to perform creations, updates, and deletes in a single bulk request:
-        # - Create: a new item under group R00001 (should get code RM061 since 9 items exist in group R00001)
-        # - Update: item RM001 (Benzene) -> change units to 'LITERS' and balance to 500.0
-        # - Delete: item FG004 (which is seeded and not used in any PO or recipe)
-        res_bulk = self.client.post('/api/inventory/items/bulk', json={
-            'creates': [
-                {
-                    'item_name': 'Bulk Seeded Solvent',
-                    'itg_code': 'R00001',
-                    'comp_id': 'NC',
-                    'units': 'LITERS',
-                    'gst_pr': 18.0,
-                    'bal_qt': 100.0
-                }
-            ],
-            'updates': [
-                {
-                    'item_code': 'RM001',
-                    'item_name': 'Benzene Premium',
-                    'itg_code': 'R00001',
-                    'comp_id': 'NC',
-                    'units': 'LITERS',
-                    'gst_pr': 18.0,
-                    'bal_qt': 500.0,
-                    'min_qt': 10.0,
-                    'ror_qt': 20.0,
-                    'lead_time': 3,
-                    'last_rate': 2.50,
-                    'is_lic': False,
-                    'is_imp': False
-                }
-            ],
-            'deletes': ['FG004']
-        }, headers=headers_admin)
-        
-        self.assertEqual(res_bulk.status_code, 200)
-        data = res_bulk.get_json()
-        self.assertTrue(data['success'])
-        
-        # Verify created item exists (it should have code RM061)
-        res_new = self.client.get('/api/inventory/items/RM061', headers=headers_admin)
-        self.assertEqual(res_new.status_code, 200)
-        self.assertEqual(res_new.get_json()['item_name'], 'Bulk Seeded Solvent')
-        
-        # Verify updated item exists and contains updated values
-        res_upd = self.client.get('/api/inventory/items/RM001', headers=headers_admin)
-        self.assertEqual(res_upd.status_code, 200)
-        upd_data = res_upd.get_json()
-        self.assertEqual(upd_data['item_name'], 'Benzene Premium')
-        self.assertEqual(upd_data['units'], 'LITERS')
-        self.assertEqual(upd_data['bal_qt'], 500.0)
-        
-        # Verify deleted item is gone
-        res_del = self.client.get('/api/inventory/items/FG004', headers=headers_admin)
-        self.assertEqual(res_del.status_code, 404)
-        
-        # Verify that attempting to delete an item used in recipe/PO (e.g. RM005) fails and rolls back
-        res_fail = self.client.post('/api/inventory/items/bulk', json={
-            'deletes': ['RM005']
-        }, headers=headers_admin)
-        self.assertEqual(res_fail.status_code, 400)
-        self.assertIn('referenced in recipes', res_fail.get_json()['error'])
-        
-        print("-> SUCCESS: Bulk update api successfully handles updates, deletions, and autogeneration.")
-
-    def test_11_bulk_groups_excel_mode(self):
-        print("\n[VERIFICATION 11] Verifying Bulk Item Group Updates (Group Excel Spreadsheet)...")
-        headers_admin = {
-            'X-User-Role': 'Admin'
-        }
-        
-        # Test creation of a new group, updating packaging/names of existing group P00001 (from seed), and deleting group CAT (seeded but empty)
-        res_bulk = self.client.post('/api/inventory/groups/bulk', json={
-            'creates': [
-                {
-                    'itg_code': 'NEWGP',
-                    'itg_name': 'New Bulk Group',
-                    'itg_cgkey': 'NE',
-                    'prefix': 'NW',
-                    'last_sequence': 0
-                }
-            ],
-            'updates': [
-                {
-                    'itg_code': 'P00001',
-                    'itg_name': 'Updated Packaging Group',
-                    'itg_cgkey': 'PK',
-                    'prefix': 'PA',
-                    'last_sequence': 5
-                }
-            ],
-            'deletes': ['A00001']
-        }, headers=headers_admin)
-        
-        self.assertEqual(res_bulk.status_code, 200)
-        data = res_bulk.get_json()
-        self.assertTrue(data['success'])
-        
-        # Verify created group exists
-        res_group_new = self.client.get('/api/inventory/groups')
-        groups = res_group_new.get_json()
-        newg = next(g for g in groups if g['itg_code'] == 'NEWGP')
-        self.assertEqual(newg['itg_name'], 'New Bulk Group')
-        
-        # Verify updated group details
-        updg = next(g for g in groups if g['itg_code'] == 'P00001')
-        self.assertEqual(updg['itg_name'], 'Updated Packaging Group')
-        self.assertEqual(updg['last_sequence'], 5)
-        
-        # Verify deleted group is gone
-        self.assertFalse(any(g['itg_code'] == 'A00001' for g in groups))
-        
-        # Verify that attempting to delete group R00001 (contains items RM001-RM009) fails and rolls back
-        res_fail = self.client.post('/api/inventory/groups/bulk', json={
-            'deletes': ['R00001']
-        }, headers=headers_admin)
-        self.assertEqual(res_fail.status_code, 400)
-        self.assertIn('contains', res_fail.get_json()['error'])
-        print("-> SUCCESS: Bulk group operations and checks verified successfully.")
-
-    def test_12_bulk_vendors_excel_mode(self):
-        print("\n[VERIFICATION 12] Verifying Bulk Vendor/Party Updates (Party Excel Spreadsheet)...")
-        headers_admin = {
-            'X-User-Role': 'Admin'
+            'Authorization': f'Bearer {self.admin_token}'
         }
         
         # Let's seed an empty vendor that we can delete
@@ -876,7 +662,7 @@ class MRPSystemTestCase(unittest.TestCase):
         print("\n[VERIFICATION 13] Verifying Company Profile API endpoints...")
         
         headers_admin = {
-            'X-User-Role': 'Admin'
+            'Authorization': f'Bearer {self.admin_token}'
         }
         
         # 1. Fetch companies
@@ -912,7 +698,7 @@ class MRPSystemTestCase(unittest.TestCase):
         # 4. Verify viewer cannot update
         res_viewer = self.client.put('/api/companies/NC', json={
             'comp_name': 'Nova Chem Solutions (Malicious)'
-        }, headers={'X-User-Role': 'Viewer'})
+        }, headers=self.headers_viewer)
         self.assertEqual(res_viewer.status_code, 403)
         
         print("-> SUCCESS: Checked company retrieval, permission protection, and updates.")
