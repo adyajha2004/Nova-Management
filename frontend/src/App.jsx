@@ -1225,7 +1225,7 @@ export default function App() {
               <Layers className="h-8 w-8 text-white" />
             </div>
             <div>
-              <h2 className="text-2xl font-bold tracking-tight bg-gradient-to-r from-white via-slate-200 to-slate-400 bg-clip-text text-transparent">Nova Company</h2>
+              <h2 className="text-2xl font-bold tracking-tight bg-gradient-to-r from-white via-slate-200 to-slate-400 bg-clip-text text-transparent">Nova Group</h2>
               <p className="text-xs text-slate-400 font-semibold mt-1">Production & Material Requirements Planning</p>
             </div>
           </div>
@@ -1322,7 +1322,7 @@ export default function App() {
             <Layers className="h-6 w-6 text-white animate-pulse" />
           </div>
           <div>
-            <h1 className="text-xl font-bold tracking-tight bg-gradient-to-r from-white via-slate-200 to-slate-400 bg-clip-text text-transparent">Nova Company</h1>
+            <h1 className="text-xl font-bold tracking-tight bg-gradient-to-r from-white via-slate-200 to-slate-400 bg-clip-text text-transparent">Nova Group</h1>
             <p className="text-xs text-slate-400 font-medium">Production & Material Requirements Planning</p>
           </div>
         </div>
@@ -1987,17 +1987,15 @@ export default function App() {
                   <table className="w-full text-left border-collapse">
                   <thead>
                     <tr className="bg-slate-950/50 border-b border-slate-800 text-xs font-bold text-slate-400 uppercase tracking-wider">
-                      <th className="py-4 px-6">Company</th>
-                      <th className="py-4 px-6">Item Code</th>
-                      <th className="py-4 px-6">Item Name</th>
-                      <th className="py-4 px-6">Group</th>
-                      <th className="py-4 px-6">Packing</th>
-                      <th className="py-4 px-6 text-right">Balance Qty</th>
-                      <th className="py-4 px-6">Units</th>
-                      <th className="py-4 px-6 text-right">GST %</th>
-                      <th className="py-4 px-6 text-right">Min Qty</th>
-                      <th className="py-4 px-6 text-right">Last Rate</th>
-                      <th className="py-4 px-6">Status</th>
+                      <th className="py-4 px-6">Comp</th>
+                      <th className="py-4 px-6 min-w-[200px]">Item Name</th>
+                      <th className="py-4 px-8 min-w-[160px]" >Group</th>
+                      <th className="py-4 px-2 text-center">Stk Qty</th>
+                      <th className="py-4 px-2">Units</th>
+                      {/* <th className="py-4 px-2 text-right">GST %</th> */}
+                      <th className="py-4 px-2 text-right">Min Qty</th>
+                      <th className="py-4 px-2 text-right">Last Rate</th>
+                      <th className="py-4 px-2">Status</th>
                       {userRole === 'Admin' && <th className="py-4 px-6 text-right">Actions</th>}
                     </tr>
                   </thead>
@@ -2017,14 +2015,13 @@ export default function App() {
                             setItemDetailsModal(true);
                           }}>
                             <td className="py-4 px-6">{renderCompanyBadge(itm.comp_id)}</td>
-                            <td className="py-4 px-6 font-mono font-bold text-indigo-400">{itm.item_code}</td>
-                            <td className="py-4 px-6 text-white font-medium">{itm.item_name}</td>
+                            {/* <td className="py-4 px-6 font-mono font-bold text-indigo-400">{itm.item_code}</td> */}
+                            <td className="py-4 px-2 text-white font-medium">{itm.item_name}</td>
                             <td className="py-4 px-6">
-                              <span className="px-2 py-0.5 rounded-md text-xs font-bold bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">
-                                {itm.itg_code}
+                              <span className="px-2 py-0.5 rounded-md text-xs font-bold text-indigo-400 ">
+                                {groups.find(group => group.itg_code === itm.itg_code)?.itg_name ?? itm.itg_code}
                               </span>
                             </td>
-                            <td className="py-4 px-6 text-slate-400 text-xs">{itm.packing || 'Bulk'} ({itm.pack_qty || 1} qty)</td>
                             <td className="py-4 px-6 text-right font-bold text-white" onClick={(e) => e.stopPropagation()}>
                               {userRole === 'Admin' ? (
                                 <input 
@@ -2038,19 +2035,19 @@ export default function App() {
                               )}
                             </td>
                             <td className="py-4 px-6 text-slate-400 text-xs uppercase">{itm.units}</td>
-                            <td className="py-4 px-6 text-right text-slate-300">{itm.gst_pr}%</td>
+                            {/* <td className="py-4 px-6 text-right text-slate-300">{itm.gst_pr}%</td> */}
                             <td className="py-4 px-6 text-right text-slate-300">{itm.min_qt}</td>
                             <td className="py-4 px-6 text-right font-semibold text-teal-400 font-mono">₹{itm.last_rate}</td>
                             <td className="py-4 px-6">
                               {isLow ? (
-                                <span className="flex items-center gap-1.5 text-amber-500 text-xs font-bold bg-amber-500/10 border border-amber-500/20 px-2 py-1 rounded-lg w-fit">
+                                <span className="flex items-center gap-1.5 text-red-500 text-xs font-bold bg-red-500/10 border border-red-500/20 px-2 py-1 rounded-lg w-fit">
                                   <AlertTriangle className="h-3.5 w-3.5" />
-                                  Deficit
+                                  {/* Deficit */}
                                 </span>
                               ) : (
                                 <span className="flex items-center gap-1.5 text-emerald-400 text-xs font-bold bg-emerald-500/10 border border-emerald-500/20 px-2 py-1 rounded-lg w-fit">
                                   <CheckCircle className="h-3.5 w-3.5" />
-                                  Sufficient
+                                  {/* Sufficient */}
                                 </span>
                               )}
                             </td>
@@ -2104,7 +2101,7 @@ export default function App() {
               {/* Create/Edit Item Modal (Unified Code Auto-Generation) */}
               {newItemModal && (
                 <div className="fixed inset-0 z-50 bg-slate-950/60 backdrop-blur-sm flex items-center justify-center p-4">
-                  <div className={`bg-slate-900 border border-slate-800 rounded-2xl w-full p-6 shadow-2xl animate-in fade-in zoom-in-95 duration-150 ${editingItem ? 'max-w-lg' : 'max-w-2xl'}`}>
+                  <div className={`bg-slate-900 border border-slate-800 rounded-2xl w-full p-6 shadow-2xl flex flex-col max-h-[85vh] overflow-hidden animate-in fade-in zoom-in-95 duration-150 ${editingItem ? 'max-w-xl' : 'max-w-3xl'}`}>
                     <div className="flex justify-between items-center border-b border-slate-800 pb-4 mb-4">
                       <h3 className="text-lg font-bold text-white">{editingItem ? `Edit Details for ${editingItem.item_code}` : 'Create New Item'}</h3>
                       <button onClick={() => setNewItemModal(false)} className="text-slate-500 hover:text-slate-200">
@@ -2112,7 +2109,7 @@ export default function App() {
                       </button>
                     </div>
 
-                    <form onSubmit={editingItem ? handleUpdateItem : handleCreateItem} className="flex flex-col gap-4 text-sm">
+                    <form onSubmit={editingItem ? handleUpdateItem : handleCreateItem} className="flex flex-col gap-4 text-sm overflow-y-auto flex-1 pr-1">
                       <div className="flex flex-col gap-1.5">
                         <label className="text-xs font-bold text-slate-400 uppercase">Item Name</label>
                         <input 
@@ -2611,11 +2608,11 @@ export default function App() {
                   <table className="w-full text-left border-collapse">
                     <thead>
                       <tr className="bg-slate-950/50 border-b border-slate-800 text-xs font-bold text-slate-400 uppercase tracking-wider">
-                        <th className="py-4 px-6">Company</th>
-                        <th className="py-4 px-6 font-mono">Recipe Code</th>
-                        <th className="py-4 px-6">Recipe Name</th>
-                        <th className="py-4 px-6 text-right">Standard Yield</th>
-                        {userRole === 'Admin' && <th className="py-4 px-6 text-right">Actions</th>}
+                        <th className="py-4 px-4">Comp</th>
+                        <th className="py-4 px-4 font-mono">Recipe Code</th>
+                        <th className="py-4 px-4">Recipe Name</th>
+                        <th className="py-4 px-4 text-right">Yield</th>
+                        {userRole === 'Admin' && <th className="py-4 px-4 text-right">Actions</th>}
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-800/50 text-sm">

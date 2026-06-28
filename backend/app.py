@@ -52,14 +52,14 @@ def create_app():
     def health_check():
         return jsonify({
             'status': 'healthy',
-            'system': 'Nova Company MRP Backend',
+            'system': 'Nova Group MRP Backend',
             'api_version': '1.0.0'
         })
         
     @app.route('/', methods=['GET'])
     def index():
         return jsonify({
-            'message': 'Nova Company MRP REST API is running successfully.',
+            'message': 'Nova Group MRP REST API is running successfully.',
             'health_check_url': '/health',
             'frontend_instruction': 'Please start and access the React SPA interface on port 3000 by running: cd frontend && npm run dev',
             'available_api_scopes': [
