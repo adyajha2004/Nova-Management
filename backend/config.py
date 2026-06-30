@@ -25,4 +25,5 @@ class Config:
     
     # CORS
     CORS_ORIGINS = os.environ.get('CORS_ORIGINS', '*')
-    CORS_HEADERS = 'Content-Type'
+    CORS_HEADERS = 'Content-Type, Authorization'
+    
