@@ -8,7 +8,7 @@ inventory_bp = Blueprint('inventory', __name__)
 
 @inventory_bp.route('/api/inventory/groups', methods=['GET'])
 def get_groups():
-    groups = Item_Group.query.all()
+    groups = Item_Group.query.order_by(Item_Group.itg_name.asc()).all()
     return jsonify([g.serialize() for g in groups])
 
 @inventory_bp.route('/api/inventory/groups', methods=['POST'])
@@ -99,7 +99,7 @@ def delete_group(itg_code):
 
 @inventory_bp.route('/api/inventory/items', methods=['GET'])
 def get_items():
-    items = Item_Master.query.all()
+    items = Item_Master.query.order_by(Item_Master.item_name.asc()).all()
     return jsonify([itm.serialize() for itm in items])
 
 @inventory_bp.route('/api/inventory/items/<item_code>', methods=['GET'])

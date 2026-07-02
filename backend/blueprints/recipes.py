@@ -9,7 +9,7 @@ recipes_bp = Blueprint('recipes', __name__)
 
 @recipes_bp.route('/api/recipes', methods=['GET'])
 def get_recipes():
-    recipes = Recipe_Master.query.all()
+    recipes = Recipe_Master.query.order_by(Recipe_Master.rcp_name.asc()).all()
     return jsonify([rcp.serialize() for rcp in recipes])
 
 @recipes_bp.route('/api/recipes/<rcp_code>', methods=['GET'])

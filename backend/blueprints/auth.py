@@ -70,7 +70,7 @@ def get_profile():
 @auth_bp.route('/api/companies', methods=['GET'])
 def get_companies():
     from models import Company
-    companies = Company.query.all()
+    companies = Company.query.order_by(Company.comp_name.asc()).all()
     return jsonify([
         {
             'comp_id': c.comp_id,
