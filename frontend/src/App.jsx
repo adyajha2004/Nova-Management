@@ -568,6 +568,8 @@ export default function App() {
       ror_qt: 0.0,
       lead_time: 5,
       last_rate: 0.0,
+      lrec_date: '',
+      liss_date: '',
       is_lic: false,
       is_imp: false,
       isNew: true,
@@ -645,6 +647,8 @@ export default function App() {
           ror_qt: parseFloat(itm.ror_qt) || 0.0,
           lead_time: parseInt(itm.lead_time) || 5,
           last_rate: parseFloat(itm.last_rate) || 0.0,
+          lrec_date: itm.lrec_date,
+          liss_date: itm.liss_date,
           is_lic: !!itm.is_lic,
           is_imp: !!itm.is_imp
         });
@@ -664,6 +668,8 @@ export default function App() {
           original.lead_time !== itm.lead_time ||
           original.last_rate !== itm.last_rate ||
           original.is_lic !== itm.is_lic ||
+          original.lrec_date !== itm.lrec_date ||
+          original.liss_date !== itm.liss_date ||
           original.is_imp !== itm.is_imp;
           
         if (isModified) {
@@ -681,6 +687,8 @@ export default function App() {
             ror_qt: parseFloat(itm.ror_qt) || 0.0,
             lead_time: parseInt(itm.lead_time) || 0,
             last_rate: parseFloat(itm.last_rate) || 0.0,
+            lrec_date: itm.lrec_date || null,
+            liss_date: itm.liss_date || null,
             is_lic: !!itm.is_lic,
             is_imp: !!itm.is_imp
           });
@@ -4503,6 +4511,8 @@ export default function App() {
                           <th className="py-3 px-3 w-24 bg-slate-950/60">Pack Qty</th>
                           <th className="py-3 px-3 w-28 text-right bg-slate-950/60">Bal Qty</th>
                           <th className="py-3 px-3 w-24 bg-slate-950/60">Units</th>
+                          <th className="py-3 px-3 w-28 bg-slate-950/60">Last Receive</th>
+                          <th className="py-3 px-3 w-28 bg-slate-950/60">Last Issue</th>
                           <th className="py-3 px-3 w-24 text-right bg-slate-950/60">GST %</th>
                           <th className="py-3 px-3 w-24 text-right bg-slate-950/60">Min Qty</th>
                           <th className="py-3 px-3 w-24 text-right bg-slate-950/60">Reorder Qty</th>
@@ -4558,6 +4568,29 @@ export default function App() {
                               <td className="py-1 px-2">
                                 <input type="text" disabled={isDeleted} value={itm.units} onChange={(e) => handleCellChange('units', e.target.value)} className="bg-slate-950 border border-slate-800 rounded px-2 py-1 text-slate-300 text-xs w-full focus:border-indigo-500 focus:outline-none font-mono uppercase" />
                               </td>
+                              <td>
+                                <input
+                                    type="date"
+                                    value={itm.lrec_date || ""}
+                                    onChange={(e) => {
+                                        const updated = [...excelItems];
+                                        updated[index].lrec_date = e.target.value;
+                                        setExcelItems(updated);
+                                    }}
+                                />
+                            </td>
+
+                            <td>
+                                <input
+                                    type="date"
+                                    value={itm.liss_date || ""}
+                                    onChange={(e) => {
+                                        const updated = [...excelItems];
+                                        updated[index].liss_date = e.target.value;
+                                        setExcelItems(updated);
+                                    }}
+                                />
+                            </td>
                               <td className="py-1 px-2">
                                 <input type="number" step="0.1" disabled={isDeleted} value={itm.gst_pr} onChange={(e) => handleCellChange('gst_pr', parseFloat(e.target.value) || 0.0)} className="bg-slate-955 border border-slate-800 rounded px-2 py-1 text-slate-300 text-xs w-full focus:border-indigo-500 focus:outline-none text-right font-mono" />
                               </td>
