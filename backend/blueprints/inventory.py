@@ -1,3 +1,5 @@
+import datetime
+
 from flask import Blueprint, jsonify, request, abort
 from flask_jwt_extended import jwt_required
 from models import db, Item_Master, Item_Group, Party_Item, Party_Master
@@ -221,9 +223,32 @@ def update_item(item_code):
     old_bal = itm.bal_qt
     new_bal = data.get('bal_qt')
     
-    if new_bal is not None and float(new_bal) != float(old_bal):
-        itm.bal_qt = float(new_bal)
-        log_change('item_master', f'{item_code}.bal_qt', old_bal, new_bal)
+    if new_bal is not None:
+        new_bal = float(new_bal)
+
+        if new_bal > old_bal:
+            old_date = itm.lrec_date
+            itm.lrec_date = datetime.now().date()
+            log_change(
+                'item_master',
+                f'{item_code}.lrec_date',
+                old_date,
+                itm.lrec_date
+            )
+
+        elif new_bal < old_bal:
+            old_date = itm.lrec_date
+            itm.liss_date = datetime.now().date()
+            log_change(
+                'item_master',
+                f'{item_code}.liss_date',
+                old_date,
+                itm.liss_date
+            )
+
+        if new_bal != old_bal:
+            itm.bal_qt = new_bal
+            log_change('item_master', f'{item_code}.bal_qt', old_bal, new_bal)
         
     if 'item_name' in data:
         itm.item_name = data['item_name']
@@ -417,7 +442,27 @@ def bulk_update_items():
             
         old_bal = float(itm.bal_qt)
         new_bal = float(u.get('bal_qt', 0.0))
-        
+
+        if new_bal > old_bal:
+            old_date = itm.lrec_date
+            itm.lrec_date = datetime.now().date()
+            log_change(
+                'item_master',
+                f'{item_code}.lrec_date',
+                old_date,
+                itm.lrec_date
+            )
+
+        elif new_bal < old_bal:
+            old_date = itm.liss_date
+            itm.liss_date = datetime.now().date()
+            log_change(
+                'item_master',
+                f'{item_code}.liss_date',
+                old_date,
+                itm.liss_date
+            )
+
         itm.item_name = u.get('item_name', itm.item_name)
         itm.itg_code = u.get('itg_code', itm.itg_code)
         itm.comp_id = u.get('comp_id', itm.comp_id)
